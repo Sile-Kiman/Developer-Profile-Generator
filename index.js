@@ -43,27 +43,28 @@ function promptUser() {
         ]
     }
     ])
-    .then( function ({username, color}) {
-            
+    .then(function ({username, color}) {
+       
         const queryUrl = `https://api.github.com/users/${username}?per_page=100`;
             //const resp= await axios.get(queryUrl);
-    return axios
-     .get(queryUrl).then(resp => {
-         const data = resp.data
-         //console.log("resp:", data)
+         return axios
+         .get(queryUrl)
+         .then (resp => {
+            const data =resp.data
+            console.log("resp:", data.name)
             return{
               githubData: resp,
               nameColor: color,
-            }    
-        })
+            }  
+         });
+        
     });
 
 }
- 
-function generateHTML(data, color) {
-    console.log("mydata:", data)
-    //console.log("color:", color)
-    //console.log("newdata:", data)
+//console.log("resp:", data.name)
+function generateHTML({data, color}) {
+ console.log("color: ", color)
+    
  return `
    <!DOCTYPE html>
    <html lang="en">
@@ -79,7 +80,7 @@ function generateHTML(data, color) {
          <style>
             
            .nameColor{
-            color: ${color}
+            color:${color}
            } 
              
          
@@ -88,7 +89,7 @@ function generateHTML(data, color) {
       <body>
  
          <div class="jumbotron .container-fluid">
-             <h3 class="display-5 nameColor">${gitdata.name}</h3>
+             <h3 class="display-5 nameColor">${data.name}</h3>
              <hr class="my-4">
              <img src=${data.avatar_url} width="200" height="200" alt="user"></img>
              </br></br>
@@ -113,8 +114,8 @@ async function init() {
     try {
 
         const output = await promptUser();
-        //console.log("ans:", output)
-        const html = generateHTML(output.githubData , output.nameColor);
+        console.log("ans:", output)
+        const html = generateHTML(output.githubData, output.nameColor)  ;
         await writeFileAsync("index.html", html);
         console.log("created an HTML page successfully");
     }
