@@ -2,23 +2,10 @@ const inquirer = require("inquirer");
 const fs = require("fs");
 const util = require("util");
 const axios = require("axios");
-
+ 
+ 
 const writeFileAsync = util.promisify(fs.writeFile);
 
-
- //declare some varaible
-let user_picture="";
-let user_name ="";
-let user_location= "";
-let user_profile ="" ;
-let user_followers='' ;
-let user_followings='' ;
-let user_bio='' ;
-let user_blog= '' ;
-let user_publicRepos ='';
-let gitHub_stars ='' ;
-let output;
-console.log(user_bio)
 
 function promptUser() {
     //     return inquirer.prompt([
@@ -61,8 +48,8 @@ function promptUser() {
     });
 
 }
-//console.log("resp:", data.name)
-function generateHTML({data, color}) {
+
+function generateHTML(data, color) {
  console.log("color: ", color)
     
  return `
@@ -115,7 +102,7 @@ async function init() {
 
         const output = await promptUser();
         console.log("ans:", output)
-        const html = generateHTML(output.githubData, output.nameColor)  ;
+        const html = generateHTML(output.githubData.data, output.nameColor)  ;
         await writeFileAsync("index.html", html);
         console.log("created an HTML page successfully");
     }
