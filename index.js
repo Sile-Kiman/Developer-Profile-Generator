@@ -2,14 +2,15 @@ const inquirer = require("inquirer");
 const fs = require("fs");
 const util = require("util");
 const axios = require("axios");
+const pdf = require("html-pdf"); 
  
- 
+// promise async
 const writeFileAsync = util.promisify(fs.writeFile);
-
-
+ 
+ 
+//Function to prompt user and collect answers using inquirer
 function promptUser() {
-    //     return inquirer.prompt([
-    return inquirer.prompt([{
+     return inquirer.prompt([{
         type: "input",
         message: "Enter your GitHub username",
         name: "username"
@@ -30,15 +31,16 @@ function promptUser() {
         ]
     }
     ])
-    .then(function ({username, color}) {
+    .then( ({username, color})=> {
        
-        const queryUrl = `https://api.github.com/users/${username}?per_page=100`;
+        const queryUrl = `https://api.github.com/users/${username}?/repos/per_page=100`;
+        //const queryUrl = `https://api.github.com/users/${username}/repo/stargazers?per_page=100`
             //const resp= await axios.get(queryUrl);
          return axios
          .get(queryUrl)
          .then (resp => {
             const data =resp.data
-            console.log("resp:", data.name)
+           console.log("resp:", data.stargazers_count)
             return{
               githubData: resp,
               nameColor: color,
@@ -50,7 +52,7 @@ function promptUser() {
 }
 
 function generateHTML(data, color) {
- console.log("color: ", color)
+ //console.log("color: ", color)
     
  return `
    <!DOCTYPE html>
@@ -83,7 +85,7 @@ function generateHTML(data, color) {
              <p class="lead">Bio: ${data.bio}</p>
              <p class="lead"><a href=${data.html_url}>${data.name}'s GitHub Profile</a></p>
              <p class="lead"><a href=${data.blog}>${data.name}'s Blog</a></p>
-             <p class="lead">GitHub Stars: ${data.gists_url}</p>
+             <p class="lead">GitHub Stars: ${data.public_gists}</p>
              <p class="lead">Public Repos: ${data.public_repos}</p>
              <p class="lead">Followers: ${data.followers}</p>
              <p class="lead">Following: ${data.following}</p>
@@ -105,13 +107,15 @@ async function init() {
         const html = generateHTML(output.githubData.data, output.nameColor)  ;
         await writeFileAsync("index.html", html);
         console.log("created an HTML page successfully");
+        const  options = { format: 'Letter' };
+        pdf.create(html, options).toFile('Dev_Profile.pdf')
+        console.log("PDF success!")
+         
     }
     catch (err) {
+        //err = "Some Error occur. Please clear the consol and try again"
         console.log(`error: `, err);
-
     }
 
-
 }
-//promptUser()
 init()
