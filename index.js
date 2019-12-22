@@ -2,15 +2,15 @@ const inquirer = require("inquirer");
 const fs = require("fs");
 const util = require("util");
 const axios = require("axios");
-const pdf = require("html-pdf"); 
- 
+const pdf = require("html-pdf");
+
 // promise async
 const writeFileAsync = util.promisify(fs.writeFile);
  
- 
+
 //Function to prompt user and collect answers using inquirer
 function promptUser() {
-     return inquirer.prompt([{
+    return inquirer.prompt([{
         type: "input",
         message: "Enter your GitHub username",
         name: "username"
@@ -31,30 +31,52 @@ function promptUser() {
         ]
     }
     ])
-    .then( ({username, color})=> {
-       
-        const queryUrl = `https://api.github.com/users/${username}?/repos/per_page=100`;
-        //const queryUrl = `https://api.github.com/users/${username}/repo/stargazers?per_page=100`
-            //const resp= await axios.get(queryUrl);
-         return axios
-         .get(queryUrl)
-         .then (resp => {
-            const data =resp.data
-           console.log("resp:", data.stargazers_count)
-            return{
-              githubData: resp,
-              nameColor: color,
-            }  
-         });
+    .then(function ({ username, color}) {
+
+        const queryUrl = `https://api.github.com/users/${username}/?per_page=100`;
         
+        numbOfRepoStar(username)
+         
+        return axios
+        .get(queryUrl)
+        .then(resp => {
+          const data = resp
+         //return color and user GitHub login name
+         return {
+                    githubData: resp,
+                    nameColor: color,
+                }
+        })
+         
+    });  
+      
+
+}
+ 
+function numbOfRepoStar(username){
+
+    const queryUrlStar = `https://api.github.com/users/${username}/starred`
+    return axios.get(queryUrlStar)
+    .then(res => {
+           
+          let sum = 0;
+          const starNum = res.data.map(function (repo, err) {
+          if (err) console.log(err)
+          const starG = repo.stargazers_count;
+          sum =sum + starG;
+          console.log("each:", starG)
+          console.log("Sum:", sum)
+        
+        });return starNum;
+
     });
 
 }
 
+//Function to generate the Html page
 function generateHTML(data, color) {
- //console.log("color: ", color)
-    
- return `
+               
+return `
    <!DOCTYPE html>
    <html lang="en">
       <head>
@@ -67,7 +89,14 @@ function generateHTML(data, color) {
          <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
          <title>GitHub Profile</title>
          <style>
+         .jumbotron {
+            padding: 2rem 1rem;
             
+            background-color: black;
+            border-radius: 10px;
+            color: white;
+            margin: 40px;
+         }
            .nameColor{
             color:${color}
            } 
@@ -100,22 +129,22 @@ function generateHTML(data, color) {
 }
 
 async function init() {
-    try {
+                try {
 
-        const output = await promptUser();
-        console.log("ans:", output)
-        const html = generateHTML(output.githubData.data, output.nameColor)  ;
-        await writeFileAsync("index.html", html);
-        console.log("created an HTML page successfully");
-        const  options = { format: 'Letter' };
-        pdf.create(html, options).toFile('Dev_Profile.pdf')
-        console.log("PDF success!")
-         
-    }
-    catch (err) {
-        //err = "Some Error occur. Please clear the consol and try again"
-        console.log(`error: `, err);
-    }
+                    const output = await promptUser(); 
+                    const html = generateHTML(output.githubData.data, output.nameColor);
+                    await writeFileAsync("index.html", html);
+                    console.log("created an HTML page successfully");
+                    const options = { format: 'Letter' };
+                    pdf.create(html, options).toFile('Dev_Profile.pdf', pdf)
+                    console.log("PDF success!")
 
-}
+                }
+                catch (err) {
+                    //Show the error message that stoped the code"
+                    console.log(`error: `, err);
+                }
+
+            }
+ 
 init()
