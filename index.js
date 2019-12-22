@@ -6,7 +6,7 @@ const pdf = require("html-pdf");
 
 // promise async
 const writeFileAsync = util.promisify(fs.writeFile);
- 
+
 
 //Function to prompt user and collect answers using inquirer
 function promptUser() {
@@ -31,52 +31,55 @@ function promptUser() {
         ]
     }
     ])
-    .then(function ({ username, color}) {
+        .then(function ({ username, color }) {
 
-        const queryUrl = `https://api.github.com/users/${username}/?per_page=100`;
-        
-        numbOfRepoStar(username)
-         
-        return axios
-        .get(queryUrl)
-        .then(resp => {
-          const data = resp
-         //return color and user GitHub login name
-         return {
-                    githubData: resp,
-                    nameColor: color,
-                }
-        })
-         
-    });  
-      
+            const queryUrl = `https://api.github.com/users/${username}?per_page=100`;
+
+            numbOfRepoStar(username)
+
+            return axios
+                .get(queryUrl)
+                .then(resp => {
+                    const data = resp
+                    //return color and user GitHub login name
+                    return {
+                        githubData: resp,
+                        nameColor: color,
+                    }
+                })
+
+        });
 
 }
  
-function numbOfRepoStar(username){
+ 
+ 
+function numbOfRepoStar(username) {
 
     const queryUrlStar = `https://api.github.com/users/${username}/starred`
     return axios.get(queryUrlStar)
-    .then(res => {
-           
-          let sum = 0;
-          const starNum = res.data.map(function (repo, err) {
-          if (err) console.log(err)
-          const starG = repo.stargazers_count;
-          sum =sum + starG;
-          console.log("each:", starG)
-          console.log("Sum:", sum)
-        
-        });return starNum;
+        .then(res => {
 
-    });
+            let sum = 0;
+            const starNum = res.data.map(function (repo, err) {
+                if (err) console.log(err)
+                const  starG = repo.stargazers_count;
+                 
+                sum = sum + starG;
+                console.log("each:", starG)
+                console.log("count:", sum)
+                 
+
+            }); return starNum;
+
+        });
 
 }
 
+
 //Function to generate the Html page
 function generateHTML(data, color) {
-               
-return `
+ return `
    <!DOCTYPE html>
    <html lang="en">
       <head>
@@ -101,10 +104,9 @@ return `
             color:${color}
            } 
              
-         
           </style>     
-      </head>
-      <body>
+    </head>
+    <body>
  
          <div class="jumbotron .container-fluid">
              <h3 class="display-5 nameColor">${data.name}</h3>
@@ -120,31 +122,32 @@ return `
              <p class="lead">Following: ${data.following}</p>
              <p class="lead">Location: ${data.location}</p>
              
-             
              <hr class="my-4">
               
-    </div> 
+          </div> 
     </body>   
    </html> `
-}
+};
 
 async function init() {
-                try {
+    try {
 
-                    const output = await promptUser(); 
-                    const html = generateHTML(output.githubData.data, output.nameColor);
-                    await writeFileAsync("index.html", html);
-                    console.log("created an HTML page successfully");
-                    const options = { format: 'Letter' };
-                    pdf.create(html, options).toFile('Dev_Profile.pdf', pdf)
-                    console.log("PDF success!")
+        const output = await promptUser();
+        const html = generateHTML(output.githubData.data, output.nameColor);
+        await writeFileAsync("index.html", html);
+        console.log("created an HTML page successfully");
+        options = { format: 'Letter' };
+        pdf.create(html, options).toFile("DevGitHub_Profile.pdf", function(err, res) {
+        if (err) return console.log(err);
+        console.log("PDF success!")
+        });
 
-                }
-                catch (err) {
-                    //Show the error message that stoped the code"
-                    console.log(`error: `, err);
-                }
+    }
+    catch (err) {
+        //Show the error message that stoped the code"
+        console.log(`error: `, err);
+    }
 
-            }
- 
+}
+
 init()
